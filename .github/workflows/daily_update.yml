@@ -1,42 +1,31 @@
 name: Daily Dashboard Update
-
 on:
   schedule:
     # Runs every day at 14:00 UTC (8:00 AM America/Chicago)
     - cron: '0 14 * * *'
-  workflow_dispatch: # Allows manual triggering
+  workflow_dispatch:
+
+permissions:
+  contents: write
 
 jobs:
   update-dashboard:
     runs-on: ubuntu-latest
-
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
-
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
           python-version: '3.x'
-
       - name: Install dependencies
         run: pip install -r requirements.txt
-
-      - name: Prepare dashboard template
-        run: |
-          mkdir -p /home/ubuntu/dashboard
-          cp index.html /home/ubuntu/dashboard/index.html
-
       - name: Run update script
         run: python update_dashboard.py
-
-      - name: Copy updated dashboard back
-        run: cp /home/ubuntu/dashboard/index.html index.html
-
       - name: Commit and push changes
         run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add index.html dashboard_content.json
-          git commit -m "Automated: Update dashboard with latest data" || echo "No changes to commit"
+          git config user.name "GitHub Actions"
+          git config user.email "actions@github.com"
+          git add index.html dashboard_content.json update_dashboard.py
+          git commit -m "Update dashboard" || echo "No changes to commit"
           git push
