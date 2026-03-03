@@ -2,8 +2,8 @@ name: Daily Dashboard Update
 
 on:
   schedule:
-    # Runs every day at 6:00 AM UTC
-    - cron: '0 6 * * *'
+    # Runs every day at 14:00 UTC (8:00 AM America/Chicago)
+    - cron: '0 14 * * *'
   workflow_dispatch: # Allows manual triggering
 
 jobs:
