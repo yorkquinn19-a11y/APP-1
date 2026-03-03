@@ -1,0 +1,1857 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Student Productivity Dashboard — Denver, CO</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <style>
+    /* ===== RESET & BASE ===== */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --bg: #ffffff;
+      --surface: #f8f9fa;
+      --surface2: #f0f2f5;
+      --border: #e0e0e0;
+      --accent: #4f8ef7;
+      --accent2: #7c5cfc;
+      --accent3: #22d3a5;
+      --accent4: #f7c948;
+      --accent5: #f76b4f;
+      --text: #1a1a1a;
+      --text2: #666666;
+      --text3: #999999;
+      --new-badge: #22d3a5;
+      --tag-bg: #e8f4f8;
+      --tag-text: #0066cc;
+      --radius: 12px;
+      --radius-sm: 8px;
+      --shadow: 0 4px 24px rgba(0,0,0,0.08);
+    }
+    html { scroll-behavior: smooth; }
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Inter', 'Segoe UI', system-ui, sans-serif;
+      min-height: 100vh;
+      line-height: 1.6;
+    }
+
+    /* ===== HEADER ===== */
+    header {
+      background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
+      border-bottom: 1px solid var(--border);
+      padding: 0 24px;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      box-shadow: 0 2px 20px rgba(0,0,0,0.08);
+    }
+    .header-inner {
+      max-width: 1400px;
+      margin: 0 auto;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      height: 64px;
+      gap: 16px;
+    }
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .logo-icon {
+      width: 36px;
+      height: 36px;
+      background: linear-gradient(135deg, var(--accent), var(--accent2));
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 18px;
+    }
+    .logo-text {
+      font-size: 18px;
+      font-weight: 700;
+      background: linear-gradient(135deg, var(--accent), var(--accent2));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    .header-meta {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+    .last-updated {
+      font-size: 12px;
+      color: var(--text3);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .live-dot {
+      width: 7px;
+      height: 7px;
+      background: var(--accent3);
+      border-radius: 50%;
+      animation: pulse 2s infinite;
+    }
+    @keyframes pulse {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.5; transform: scale(1.3); }
+    }
+    .update-btn {
+      background: linear-gradient(135deg, var(--accent), var(--accent2));
+      color: #fff;
+      border: none;
+      border-radius: var(--radius-sm);
+      padding: 8px 18px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: opacity 0.2s, transform 0.1s;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .update-btn:hover { opacity: 0.9; transform: translateY(-1px); }
+    .update-btn:active { transform: translateY(0); }
+
+    /* ===== TABS ===== */
+    .tabs-bar {
+      background: #ffffff;
+      border-bottom: 1px solid var(--border);
+      padding: 0 24px;
+      overflow-x: auto;
+      scrollbar-width: none;
+    }
+    .tabs-bar::-webkit-scrollbar { display: none; }
+    .tabs-inner {
+      max-width: 1400px;
+      margin: 0 auto;
+      display: flex;
+      gap: 4px;
+    }
+    .tab-btn {
+      background: none;
+      border: none;
+      color: var(--text2);
+      font-size: 13.5px;
+      font-weight: 500;
+      padding: 14px 18px;
+      cursor: pointer;
+      border-bottom: 3px solid transparent;
+      transition: all 0.2s;
+      white-space: nowrap;
+      display: flex;
+      align-items: center;
+      gap: 7px;
+    }
+    .tab-btn:hover { color: var(--text); }
+    .tab-btn.active {
+      color: var(--accent);
+      border-bottom-color: var(--accent);
+      font-weight: 600;
+    }
+    .tab-badge {
+      background: var(--accent);
+      color: #fff;
+      font-size: 10px;
+      font-weight: 700;
+      padding: 2px 6px;
+      border-radius: 10px;
+      min-width: 18px;
+      text-align: center;
+    }
+    .tab-badge.green { background: var(--accent3); }
+    .tab-badge.purple { background: var(--accent2); }
+    .tab-badge.yellow { background: var(--accent4); color: #111; }
+    .tab-badge.red { background: var(--accent5); }
+
+    /* ===== MAIN CONTENT ===== */
+    main {
+      max-width: 1400px;
+      margin: 0 auto;
+      padding: 28px 24px;
+    }
+    .tab-panel { display: none; }
+    .tab-panel.active { display: block; }
+
+    /* ===== SECTION HEADER ===== */
+    .section-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 20px;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+    .section-title {
+      font-size: 22px;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .section-title .icon {
+      font-size: 22px;
+    }
+    .section-subtitle {
+      font-size: 13px;
+      color: var(--text2);
+      margin-top: 2px;
+    }
+    .filter-row {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+    .filter-btn {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      color: var(--text2);
+      padding: 6px 14px;
+      border-radius: 20px;
+      font-size: 12px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .filter-btn:hover, .filter-btn.active {
+      background: var(--accent);
+      color: #fff;
+      border-color: var(--accent);
+    }
+
+    /* ===== STATS ROW ===== */
+    .stats-row {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+      gap: 14px;
+      margin-bottom: 24px;
+    }
+    .stat-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 16px 18px;
+      transition: transform 0.2s;
+    }
+    .stat-card:hover { transform: translateY(-2px); }
+    .stat-label { font-size: 11px; color: var(--text3); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px; }
+    .stat-value { font-size: 24px; font-weight: 700; }
+    .stat-value.blue { color: var(--accent); }
+    .stat-value.green { color: var(--accent3); }
+    .stat-value.purple { color: var(--accent2); }
+    .stat-value.yellow { color: var(--accent4); }
+    .stat-change { font-size: 11px; color: var(--text3); margin-top: 4px; }
+
+    /* ===== JOB CARDS ===== */
+    .jobs-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(360px, 1fr));
+      gap: 16px;
+    }
+    .job-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 20px;
+      transition: all 0.2s;
+      position: relative;
+      overflow: hidden;
+    }
+    .job-card::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0;
+      width: 3px; height: 100%;
+      background: var(--accent);
+    }
+    .job-card:hover {
+      border-color: var(--accent);
+      transform: translateY(-2px);
+      box-shadow: var(--shadow);
+    }
+    .job-card.new-job::before { background: var(--accent3); }
+    .job-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: 10px;
+      gap: 10px;
+    }
+    .job-title {
+      font-size: 15px;
+      font-weight: 700;
+      color: var(--text);
+      line-height: 1.3;
+    }
+    .new-badge {
+      background: var(--new-badge);
+      color: #0a2a20;
+      font-size: 10px;
+      font-weight: 700;
+      padding: 3px 8px;
+      border-radius: 6px;
+      white-space: nowrap;
+      flex-shrink: 0;
+    }
+    .job-company {
+      font-size: 13px;
+      color: var(--accent);
+      font-weight: 600;
+      margin-bottom: 4px;
+    }
+    .job-meta {
+      display: flex;
+      gap: 12px;
+      font-size: 12px;
+      color: var(--text2);
+      margin-bottom: 10px;
+      flex-wrap: wrap;
+    }
+    .job-meta span { display: flex; align-items: center; gap: 4px; }
+    .job-desc {
+      font-size: 12.5px;
+      color: var(--text2);
+      line-height: 1.5;
+      margin-bottom: 12px;
+    }
+    .job-tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-bottom: 14px;
+    }
+    .tag {
+      background: var(--tag-bg);
+      color: var(--tag-text);
+      font-size: 11px;
+      padding: 3px 9px;
+      border-radius: 6px;
+      font-weight: 500;
+    }
+    .job-footer {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .job-source {
+      font-size: 11px;
+      color: var(--text3);
+    }
+    .apply-btn {
+      background: linear-gradient(135deg, var(--accent), var(--accent2));
+      color: #fff;
+      text-decoration: none;
+      padding: 7px 16px;
+      border-radius: var(--radius-sm);
+      font-size: 12px;
+      font-weight: 600;
+      transition: opacity 0.2s;
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+    }
+    .apply-btn:hover { opacity: 0.85; }
+
+    /* ===== NEWS CARDS ===== */
+    .news-grid {
+      display: grid;
+      gap: 14px;
+    }
+    .news-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 18px 20px;
+      transition: all 0.2s;
+      display: grid;
+      grid-template-columns: auto 1fr auto;
+      gap: 16px;
+      align-items: start;
+    }
+    .news-card:hover {
+      border-color: var(--accent);
+      transform: translateX(3px);
+      box-shadow: var(--shadow);
+    }
+    .news-num {
+      font-size: 28px;
+      font-weight: 800;
+      color: var(--border);
+      line-height: 1;
+      min-width: 32px;
+      text-align: center;
+    }
+    .news-content { min-width: 0; }
+    .news-headline {
+      font-size: 15px;
+      font-weight: 700;
+      color: var(--text);
+      margin-bottom: 6px;
+      line-height: 1.4;
+    }
+    .news-summary {
+      font-size: 13px;
+      color: var(--text2);
+      line-height: 1.55;
+    }
+    .news-footer {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-top: 10px;
+      flex-wrap: wrap;
+    }
+    .news-source {
+      font-size: 11px;
+      color: var(--text3);
+    }
+    .news-category {
+      font-size: 10px;
+      padding: 2px 8px;
+      border-radius: 6px;
+      font-weight: 600;
+    }
+    .cat-markets { background: rgba(79,142,247,0.15); color: var(--accent); }
+    .cat-economy { background: rgba(124,92,252,0.15); color: var(--accent2); }
+    .cat-personal { background: rgba(34,211,165,0.15); color: var(--accent3); }
+    .cat-investing { background: rgba(247,201,72,0.15); color: var(--accent4); }
+    .news-link {
+      color: var(--accent);
+      text-decoration: none;
+      font-size: 12px;
+      font-weight: 600;
+      white-space: nowrap;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+    .news-link:hover { text-decoration: underline; }
+    .news-side {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+      gap: 8px;
+      min-width: 80px;
+    }
+
+    /* ===== CHARTS SECTION ===== */
+    .charts-row {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 16px;
+      margin-bottom: 28px;
+    }
+    .chart-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 20px;
+    }
+    .chart-title {
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--text2);
+      margin-bottom: 16px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .chart-container {
+      position: relative;
+      height: 200px;
+    }
+
+    /* ===== MARKET TICKER ===== */
+    .ticker-bar {
+      background: #ffffff;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 14px 20px;
+      margin-bottom: 24px;
+      display: flex;
+      gap: 28px;
+      overflow-x: auto;
+      scrollbar-width: none;
+    }
+    .ticker-bar::-webkit-scrollbar { display: none; }
+    .ticker-item {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      min-width: 80px;
+    }
+    .ticker-symbol { font-size: 11px; color: var(--text3); font-weight: 600; text-transform: uppercase; }
+    .ticker-price { font-size: 16px; font-weight: 700; }
+    .ticker-change { font-size: 11px; font-weight: 600; }
+    .up { color: var(--accent3); }
+    .down { color: var(--accent5); }
+
+    /* ===== AI CARDS ===== */
+    .ai-grid {
+      display: grid;
+      gap: 16px;
+    }
+    .ai-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 20px;
+      transition: all 0.2s;
+      display: grid;
+      grid-template-columns: auto 1fr;
+      gap: 16px;
+      align-items: start;
+    }
+    .ai-card:hover {
+      border-color: var(--accent2);
+      transform: translateY(-2px);
+      box-shadow: var(--shadow);
+    }
+    .ai-rank {
+      width: 40px;
+      height: 40px;
+      background: linear-gradient(135deg, var(--accent), var(--accent2));
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 18px;
+      font-weight: 800;
+      color: #fff;
+      flex-shrink: 0;
+    }
+    .ai-headline {
+      font-size: 15px;
+      font-weight: 700;
+      color: var(--text);
+      margin-bottom: 8px;
+      line-height: 1.4;
+    }
+    .ai-summary {
+      font-size: 13px;
+      color: var(--text2);
+      line-height: 1.55;
+      margin-bottom: 10px;
+    }
+    .ai-footer {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    /* ===== SEARCH BAR ===== */
+    .search-bar {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 20px;
+    }
+    .search-input {
+      flex: 1;
+      background: #ffffff;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      color: var(--text);
+      padding: 10px 16px;
+      font-size: 14px;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+    .search-input:focus { border-color: var(--accent); }
+    .search-input::placeholder { color: var(--text3); }
+
+    /* ===== DIVIDER ===== */
+    .divider {
+      height: 1px;
+      background: var(--border);
+      margin: 24px 0;
+    }
+
+    /* ===== RESPONSIVE ===== */
+    @media (max-width: 768px) {
+      .jobs-grid { grid-template-columns: 1fr; }
+      .news-card { grid-template-columns: 1fr; }
+      .news-num { display: none; }
+      .news-side { flex-direction: row; align-items: center; }
+      main { padding: 16px; }
+      .header-inner { height: auto; padding: 12px 0; flex-wrap: wrap; }
+      .charts-row { grid-template-columns: 1fr; }
+    }
+
+    /* ===== TOOLTIP ===== */
+    [title] { cursor: help; }
+
+    /* ===== SCROLLBAR ===== */
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: #ffffff; }
+    ::-webkit-scrollbar-thumb { background: #d0d0d0; border-radius: 3px; }
+
+    /* ===== ALERT BANNER ===== */
+    .alert-banner {
+      background: linear-gradient(135deg, rgba(247,107,79,0.08), rgba(247,107,79,0.03));
+      border: 1px solid rgba(247,107,79,0.3);
+      border-radius: var(--radius);
+      padding: 12px 18px;
+      margin-bottom: 20px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 13px;
+      background-color: #fff9f7;
+    }
+    .alert-icon { font-size: 16px; }
+    .alert-text { color: var(--text); }
+    .alert-text strong { color: var(--accent5); }
+
+    /* ===== PROGRESS BAR ===== */
+    .progress-bar-wrap {
+      background: #f0f0f0;
+      border-radius: 4px;
+      height: 6px;
+      overflow: hidden;
+      margin-top: 6px;
+    }
+    .progress-bar-fill {
+      height: 100%;
+      border-radius: 4px;
+      background: linear-gradient(90deg, var(--accent), var(--accent2));
+    }
+
+    /* ===== EMPTY STATE ===== */
+    .empty-state {
+      text-align: center;
+      padding: 48px;
+      color: var(--text3);
+    }
+    .empty-state .icon { font-size: 48px; margin-bottom: 12px; }
+
+    /* ===== HIDDEN ===== */
+    .hidden { display: none !important; }
+  </style>
+</head>
+<body>
+
+<!-- HEADER -->
+<header>
+  <div class="header-inner">
+    <div class="logo">
+      <div class="logo-icon">🎓</div>
+      <div>
+        <div class="logo-text">StudentDash</div>
+      </div>
+    </div>
+    <div class="header-meta">
+      <div class="last-updated">
+        <span class="live-dot"></span>
+        Updated: March 2, 2026 — 6:00 PM MT
+      </div>
+      <button class="update-btn" onclick="refreshDashboard()">
+        🔄 Update Dashboard
+      </button>
+    </div>
+  </div>
+</header>
+
+<!-- TABS BAR -->
+<div class="tabs-bar">
+  <div class="tabs-inner">
+    <button class="tab-btn active" onclick="switchTab('jobs', this)">
+      💼 Job Search
+      <span class="tab-badge green">12</span>
+    </button>
+    <button class="tab-btn" onclick="switchTab('finance', this)">
+      📈 Financial Moves
+      <span class="tab-badge yellow">8</span>
+    </button>
+    <button class="tab-btn" onclick="switchTab('usgov', this)">
+      🏛️ U.S. Government
+      <span class="tab-badge red">8</span>
+    </button>
+    <button class="tab-btn" onclick="switchTab('international', this)">
+      🌍 International
+      <span class="tab-badge">8</span>
+    </button>
+    <button class="tab-btn" onclick="switchTab('ai', this)">
+      🤖 AI News
+      <span class="tab-badge purple">5</span>
+    </button>
+  </div>
+</div>
+
+<!-- MAIN -->
+<main>
+
+  <!-- ===== TAB 1: JOB SEARCH ===== -->
+  <div id="tab-jobs" class="tab-panel active">
+    <div class="section-header">
+      <div>
+        <div class="section-title"><span class="icon">💼</span> Denver Metro Job Search</div>
+        <div class="section-subtitle">Finance · Accounting · Business · Data · Analytics · Operations · Supply Chain · Internships · Entry-Level</div>
+      </div>
+      <div class="filter-row">
+        <button class="filter-btn active" onclick="filterJobs('all', this)">All (12)</button>
+        <button class="filter-btn" onclick="filterJobs('new', this)">🆕 New Today (8)</button>
+        <button class="filter-btn" onclick="filterJobs('finance', this)">Finance</button>
+        <button class="filter-btn" onclick="filterJobs('data', this)">Data/Analytics</button>
+        <button class="filter-btn" onclick="filterJobs('operations', this)">Operations</button>
+      </div>
+    </div>
+
+    <!-- Stats Row -->
+    <div class="stats-row">
+      <div class="stat-card">
+        <div class="stat-label">Total Listings</div>
+        <div class="stat-value blue">12</div>
+        <div class="stat-change">Denver Metro Area</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">New This Week</div>
+        <div class="stat-value green">8</div>
+        <div class="stat-change">Posted ≤ 5 days ago</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Avg. Pay (Hourly)</div>
+        <div class="stat-value yellow">$22</div>
+        <div class="stat-change">Across listed roles</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Top Source</div>
+        <div class="stat-value purple" style="font-size:16px;">LinkedIn</div>
+        <div class="stat-change">+ ZipRecruiter</div>
+      </div>
+    </div>
+
+    <!-- Search Bar -->
+    <div class="search-bar">
+      <input class="search-input" type="text" placeholder="🔍  Filter jobs by title, company, or keyword..." oninput="searchJobs(this.value)" />
+    </div>
+
+    <!-- Charts Row -->
+    <div class="charts-row">
+      <div class="chart-card">
+        <div class="chart-title">📊 Jobs by Category</div>
+        <div class="chart-container">
+          <canvas id="jobsByCategoryChart"></canvas>
+        </div>
+      </div>
+      <div class="chart-card">
+        <div class="chart-title">💰 Pay Range Distribution</div>
+        <div class="chart-container">
+          <canvas id="payRangeChart"></canvas>
+        </div>
+      </div>
+      <div class="chart-card">
+        <div class="chart-title">📅 Posting Recency</div>
+        <div class="chart-container">
+          <canvas id="recencyChart"></canvas>
+        </div>
+      </div>
+    </div>
+
+    <!-- Job Cards -->
+    <div class="jobs-grid" id="jobs-grid">
+
+      <div class="job-card new-job" data-tags="finance accounting" data-title="Finance Intern Summer 2026 Crusoe Energy">
+        <div class="job-header">
+          <div class="job-title">Finance Intern, Summer 2026</div>
+          <span class="new-badge">🆕 NEW</span>
+        </div>
+        <div class="job-company">Crusoe Energy Systems</div>
+        <div class="job-meta">
+          <span>📍 Denver, CO</span>
+          <span>🕐 4 days ago</span>
+          <span>💵 Competitive</span>
+        </div>
+        <div class="job-desc">Seeking undergraduate enrolled in Finance, Accounting, Economics, or related field for Summer 2026. Hands-on corporate finance experience at a leading energy tech company.</div>
+        <div class="job-tags">
+          <span class="tag">Finance</span>
+          <span class="tag">Accounting</span>
+          <span class="tag">Economics</span>
+        </div>
+        <div class="job-footer">
+          <span class="job-source">via LinkedIn / Runway</span>
+          <a href="https://app.joinrunway.io/explore/job/cmkokhqlg0057js04o6b1trpb" target="_blank" class="apply-btn">Apply ↗</a>
+        </div>
+      </div>
+
+      <div class="job-card new-job" data-tags="finance analytics" data-title="STARZ Intern Finance Greenwood Village">
+        <div class="job-header">
+          <div class="job-title">STARZ Intern, Finance</div>
+          <span class="new-badge">🆕 NEW</span>
+        </div>
+        <div class="job-company">Starz (Lionsgate)</div>
+        <div class="job-meta">
+          <span>📍 Greenwood Village, CO</span>
+          <span>🕐 6 days ago</span>
+          <span>💵 $20/hr</span>
+        </div>
+        <div class="job-desc">Finance planning & analysis intern. Compile reports, monitor financial performance, perform variance and trend analysis. Rising juniors/seniors. June 15 – Aug 21, 2026.</div>
+        <div class="job-tags">
+          <span class="tag">Finance</span>
+          <span class="tag">FP&A</span>
+          <span class="tag">Excel</span>
+          <span class="tag">Analytics</span>
+        </div>
+        <div class="job-footer">
+          <span class="job-source">via ZipRecruiter</span>
+          <a href="https://www.ziprecruiter.com/c/Starz/Job/STARZ-Intern,-Finance/-in-Denver,CO?jid=c8147de14d675ef1" target="_blank" class="apply-btn">Apply ↗</a>
+        </div>
+      </div>
+
+      <div class="job-card new-job" data-tags="accounting finance" data-title="Accounting Intern National Storage Affiliates Greenwood Village">
+        <div class="job-header">
+          <div class="job-title">Accounting Intern (Summer 2026)</div>
+          <span class="new-badge">🆕 NEW</span>
+        </div>
+        <div class="job-company">National Storage Affiliates</div>
+        <div class="job-meta">
+          <span>📍 Greenwood Village, CO</span>
+          <span>🕐 4 days ago</span>
+          <span>💵 $22/hr</span>
+        </div>
+        <div class="job-desc">Part-time summer internship at DTC headquarters. Support accounts payable, financial data entry, and general ledger. Currently enrolled or recent graduate.</div>
+        <div class="job-tags">
+          <span class="tag">Accounting</span>
+          <span class="tag">Finance</span>
+          <span class="tag">Data Entry</span>
+        </div>
+        <div class="job-footer">
+          <span class="job-source">via ZipRecruiter</span>
+          <a href="https://www.ziprecruiter.com/c/National-Storage-Affiliates/Job/Accounting-Intern/-in-Greenwood-Village,CO?jid=a3a7cbf668374fea" target="_blank" class="apply-btn">Apply ↗</a>
+        </div>
+      </div>
+
+      <div class="job-card new-job" data-tags="accounting finance" data-title="Accounting Summer 2026 Intern Pulte Mortgage Denver">
+        <div class="job-header">
+          <div class="job-title">Accounting Summer 2026 Intern</div>
+          <span class="new-badge">🆕 NEW</span>
+        </div>
+        <div class="job-company">Pulte Mortgage</div>
+        <div class="job-meta">
+          <span>📍 Denver, CO (Hybrid)</span>
+          <span>🕐 3 days ago</span>
+          <span>💵 Competitive</span>
+        </div>
+        <div class="job-desc">Input financial data into accounting systems, support Accounts Payable, and assist with general ledger. Hybrid schedule with flexible hours.</div>
+        <div class="job-tags">
+          <span class="tag">Accounting</span>
+          <span class="tag">Accounts Payable</span>
+          <span class="tag">General Ledger</span>
+        </div>
+        <div class="job-footer">
+          <span class="job-source">via LinkedIn / Runway</span>
+          <a href="https://app.joinrunway.io/explore/job/cmizd42sc000wkz044sk5aje3" target="_blank" class="apply-btn">Apply ↗</a>
+        </div>
+      </div>
+
+      <div class="job-card new-job" data-tags="data analytics" data-title="Data Analyst Intern Lensa Denver">
+        <div class="job-header">
+          <div class="job-title">Data Analyst Intern</div>
+          <span class="new-badge">🆕 NEW</span>
+        </div>
+        <div class="job-company">Lensa (via partner employer)</div>
+        <div class="job-meta">
+          <span>📍 Denver, CO</span>
+          <span>🕐 5 days ago</span>
+          <span>💵 $17.42–$24.38/hr</span>
+        </div>
+        <div class="job-desc">10-week summer internship (June 1 – Aug 7, 2026). First-hand experience in data analysis, reporting, and business intelligence. Business Admin or Data Analytics majors preferred.</div>
+        <div class="job-tags">
+          <span class="tag">Data Analytics</span>
+          <span class="tag">Business Intelligence</span>
+          <span class="tag">SQL</span>
+        </div>
+        <div class="job-footer">
+          <span class="job-source">via LinkedIn</span>
+          <a href="https://www.linkedin.com/jobs/view/data-analyst-intern-at-lensa-4378060898" target="_blank" class="apply-btn">Apply ↗</a>
+        </div>
+      </div>
+
+      <div class="job-card" data-tags="data analytics" data-title="Data Analytics Intern Summer Lensa Denver">
+        <div class="job-header">
+          <div class="job-title">Data Analytics Intern (Summer)</div>
+        </div>
+        <div class="job-company">Lensa (via partner employer)</div>
+        <div class="job-meta">
+          <span>📍 Denver, CO</span>
+          <span>🕐 7 days ago</span>
+          <span>💵 $17.42–$24.38/hr</span>
+        </div>
+        <div class="job-desc">Concurrent enrollment in Bachelor's or Master's program strongly preferred. Business Administration, Data Analytics, or Healthcare majors. Summer 2026.</div>
+        <div class="job-tags">
+          <span class="tag">Data Analytics</span>
+          <span class="tag">Healthcare Analytics</span>
+          <span class="tag">Business Admin</span>
+        </div>
+        <div class="job-footer">
+          <span class="job-source">via LinkedIn</span>
+          <a href="https://www.linkedin.com/jobs/view/data-analytics-intern-summer-at-lensa-4377080014" target="_blank" class="apply-btn">Apply ↗</a>
+        </div>
+      </div>
+
+      <div class="job-card new-job" data-tags="data analytics operations" data-title="Design Management Analytics Intern Vantage Data Centers Denver">
+        <div class="job-header">
+          <div class="job-title">Design Management Analytics Intern, NA</div>
+          <span class="new-badge">🆕 NEW</span>
+        </div>
+        <div class="job-company">Vantage Data Centers</div>
+        <div class="job-meta">
+          <span>📍 Denver, CO</span>
+          <span>🕐 3 days ago</span>
+          <span>💵 $20–$25/hr</span>
+        </div>
+        <div class="job-desc">Analytics intern supporting design management and operations analytics at a leading data center company. Full-time role with competitive pay. Data-driven operations focus.</div>
+        <div class="job-tags">
+          <span class="tag">Analytics</span>
+          <span class="tag">Operations</span>
+          <span class="tag">Data Management</span>
+        </div>
+        <div class="job-footer">
+          <span class="job-source">via ZipRecruiter</span>
+          <a href="https://www.ziprecruiter.com/c/Vantage-Data-Centers/Job/Design-Management-Analytics-Intern,-NA/-in-Denver,CO?jid=6c312925627e0dce" target="_blank" class="apply-btn">Apply ↗</a>
+        </div>
+      </div>
+
+      <div class="job-card" data-tags="operations business" data-title="2026 Summer Intern Inflight Operations Strategy Frontier Airlines Denver">
+        <div class="job-header">
+          <div class="job-title">2026 Summer Intern – Inflight Operations Strategy</div>
+        </div>
+        <div class="job-company">Frontier Airlines</div>
+        <div class="job-meta">
+          <span>📍 Denver, CO</span>
+          <span>🕐 7 days ago</span>
+          <span>💵 Competitive</span>
+        </div>
+        <div class="job-desc">Pursuing degree in Business, Aviation Management, Operations, Engineering, or related field. Gain real-world exposure to airline operations strategy at a major carrier.</div>
+        <div class="job-tags">
+          <span class="tag">Operations</span>
+          <span class="tag">Business</span>
+          <span class="tag">Strategy</span>
+          <span class="tag">Aviation</span>
+        </div>
+        <div class="job-footer">
+          <span class="job-source">via Glassdoor</span>
+          <a href="https://www.glassdoor.com/Job/denver-summer-internship-jobs-SRCH_IL.0,6_IC1148170_KO7,24.htm" target="_blank" class="apply-btn">Apply ↗</a>
+        </div>
+      </div>
+
+      <div class="job-card" data-tags="operations business" data-title="2026 Summer Intern Project Manager Spectrum Greenwood Village">
+        <div class="job-header">
+          <div class="job-title">2026 Summer Intern: Project Manager</div>
+        </div>
+        <div class="job-company">Spectrum (Charter Communications)</div>
+        <div class="job-meta">
+          <span>📍 Greenwood Village, CO</span>
+          <span>🕐 12 days ago</span>
+          <span>💵 $26.50–$28.50/hr</span>
+        </div>
+        <div class="job-desc">Must be enrolled in accredited college/university graduating Dec 2026–May 2027. Exposure to project management in a Fortune 500 telecom environment. High pay for internship.</div>
+        <div class="job-tags">
+          <span class="tag">Project Management</span>
+          <span class="tag">Business</span>
+          <span class="tag">Operations</span>
+        </div>
+        <div class="job-footer">
+          <span class="job-source">via Glassdoor</span>
+          <a href="https://www.glassdoor.com/Job/denver-summer-internship-jobs-SRCH_IL.0,6_IC1148170_KO7,24.htm" target="_blank" class="apply-btn">Apply ↗</a>
+        </div>
+      </div>
+
+      <div class="job-card new-job" data-tags="finance data analytics" data-title="Public Institutions Summer 2026 Internship JLL Denver">
+        <div class="job-header">
+          <div class="job-title">Public Institutions Summer 2026 Internship</div>
+          <span class="new-badge">🆕 NEW</span>
+        </div>
+        <div class="job-company">JLL (Jones Lang LaSalle)</div>
+        <div class="job-meta">
+          <span>📍 Denver, CO</span>
+          <span>🕐 6 days ago</span>
+          <span>💵 Competitive</span>
+        </div>
+        <div class="job-desc">Undergraduate/graduate students in real estate, finance, political science, or data analytics. Analyze market data, conduct economic/demographic research using JLL platforms.</div>
+        <div class="job-tags">
+          <span class="tag">Finance</span>
+          <span class="tag">Real Estate</span>
+          <span class="tag">Data Analytics</span>
+          <span class="tag">Research</span>
+        </div>
+        <div class="job-footer">
+          <span class="job-source">via LinkedIn</span>
+          <a href="https://www.linkedin.com/jobs/view/public-institutions-summer-2026-internship-at-jll-4369731643" target="_blank" class="apply-btn">Apply ↗</a>
+        </div>
+      </div>
+
+      <div class="job-card new-job" data-tags="accounting finance" data-title="Spring 2026 Accounting Intern Enterprise Mobility Highlands Ranch">
+        <div class="job-header">
+          <div class="job-title">Spring 2026 Accounting Intern</div>
+          <span class="new-badge">🆕 NEW</span>
+        </div>
+        <div class="job-company">Enterprise Mobility</div>
+        <div class="job-meta">
+          <span>📍 Highlands Ranch, CO</span>
+          <span>🕐 5 days ago</span>
+          <span>💵 $19.50/hr</span>
+        </div>
+        <div class="job-desc">Part-time 25hr/week schedule. Assist in preparing financial statements and reports. Employee discounts and recognition program. One of the largest private companies in the U.S.</div>
+        <div class="job-tags">
+          <span class="tag">Accounting</span>
+          <span class="tag">Finance</span>
+          <span class="tag">Entry-Level</span>
+        </div>
+        <div class="job-footer">
+          <span class="job-source">via LinkedIn</span>
+          <a href="https://www.linkedin.com/jobs/view/spring-2026-accounting-intern-highlands-ranch-at-acca-careers-4379569584" target="_blank" class="apply-btn">Apply ↗</a>
+        </div>
+      </div>
+
+      <div class="job-card" data-tags="finance analytics data" data-title="Client Technology Intern Sales Analytics Janus Henderson Denver">
+        <div class="job-header">
+          <div class="job-title">Client Technology Intern – Sales Analytics</div>
+        </div>
+        <div class="job-company">Janus Henderson Investors</div>
+        <div class="job-meta">
+          <span>📍 Denver, CO</span>
+          <span>🕐 30+ days ago</span>
+          <span>💵 $25/hr</span>
+        </div>
+        <div class="job-desc">Work on sales analytics products for a global asset manager. Paid volunteer time included. Top-paying internship at a major investment firm headquartered in Denver.</div>
+        <div class="job-tags">
+          <span class="tag">Analytics</span>
+          <span class="tag">Finance</span>
+          <span class="tag">Technology</span>
+          <span class="tag">Sales</span>
+        </div>
+        <div class="job-footer">
+          <span class="job-source">via Glassdoor</span>
+          <a href="https://www.glassdoor.com/Job/denver-summer-internship-jobs-SRCH_IL.0,6_IC1148170_KO7,24.htm" target="_blank" class="apply-btn">Apply ↗</a>
+        </div>
+      </div>
+
+    </div><!-- /jobs-grid -->
+  </div><!-- /tab-jobs -->
+
+
+  <!-- ===== TAB 2: FINANCIAL MOVES ===== -->
+  <div id="tab-finance" class="tab-panel">
+    <div class="section-header">
+      <div>
+        <div class="section-title"><span class="icon">📈</span> Top 8 Financial Moves Today</div>
+        <div class="section-subtitle">Markets · Economy · Personal Finance · Investing — March 2, 2026</div>
+      </div>
+    </div>
+
+    <!-- Market Ticker -->
+    <div class="ticker-bar">
+      <div class="ticker-item">
+        <div class="ticker-symbol">S&P 500</div>
+        <div class="ticker-price up">5,812</div>
+        <div class="ticker-change up">▲ +0.1%</div>
+      </div>
+      <div class="ticker-item">
+        <div class="ticker-symbol">NASDAQ</div>
+        <div class="ticker-price up">18,340</div>
+        <div class="ticker-change up">▲ +0.4%</div>
+      </div>
+      <div class="ticker-item">
+        <div class="ticker-symbol">DOW</div>
+        <div class="ticker-price down">42,105</div>
+        <div class="ticker-change down">▼ -0.2%</div>
+      </div>
+      <div class="ticker-item">
+        <div class="ticker-symbol">OIL (WTI)</div>
+        <div class="ticker-price up">$72.50</div>
+        <div class="ticker-change up">▲ +8.0%</div>
+      </div>
+      <div class="ticker-item">
+        <div class="ticker-symbol">GOLD</div>
+        <div class="ticker-price up">$5,335</div>
+        <div class="ticker-change up">▲ +1.9%</div>
+      </div>
+      <div class="ticker-item">
+        <div class="ticker-symbol">10Y YIELD</div>
+        <div class="ticker-price up">4.05%</div>
+        <div class="ticker-change up">▲ +0.10</div>
+      </div>
+      <div class="ticker-item">
+        <div class="ticker-symbol">BITCOIN</div>
+        <div class="ticker-price up">$69,200</div>
+        <div class="ticker-change up">▲ +9.8%</div>
+      </div>
+      <div class="ticker-item">
+        <div class="ticker-symbol">USD INDEX</div>
+        <div class="ticker-price up">98.56</div>
+        <div class="ticker-change up">▲ +1.0%</div>
+      </div>
+    </div>
+
+    <!-- Charts -->
+    <div class="charts-row">
+      <div class="chart-card">
+        <div class="chart-title">📊 Market Performance Today</div>
+        <div class="chart-container">
+          <canvas id="marketPerfChart"></canvas>
+        </div>
+      </div>
+      <div class="chart-card">
+        <div class="chart-title">🛢️ Sector Performance (Today)</div>
+        <div class="chart-container">
+          <canvas id="sectorChart"></canvas>
+        </div>
+      </div>
+    </div>
+
+    <!-- News Cards -->
+    <div class="news-grid">
+
+      <div class="news-card">
+        <div class="news-num">1</div>
+        <div class="news-content">
+          <div class="news-headline">🆕 Markets Mixed as U.S.-Israel War on Iran Spooks Investors</div>
+          <div class="news-summary">S&P 500 ended +0.1%, Nasdaq +0.4%, Dow -0.2% on Monday. Oil surged ~8% to $72.50/bbl after Iran claimed to close the Strait of Hormuz. Defense stocks (NOC +6%, RTX +4.7%, LMT +3.4%) and oil majors rallied while airlines and cruise lines plunged 3–10%.</div>
+          <div class="news-footer">
+            <span class="news-category cat-markets">Markets</span>
+            <span class="news-source">Investopedia</span>
+            <a href="https://www.investopedia.com/stock-market-today-dow-jones-s-and-p-500-03022026-11917019" target="_blank" class="news-link">Read ↗</a>
+          </div>
+        </div>
+        <div class="news-side">
+          <span class="new-badge">🆕 NEW</span>
+        </div>
+      </div>
+
+      <div class="news-card">
+        <div class="news-num">2</div>
+        <div class="news-content">
+          <div class="news-headline">🆕 Gold Hits $5,335/oz — Safe-Haven Demand Surges</div>
+          <div class="news-summary">Gold futures advanced nearly 2% to $5,335/oz amid Middle East conflict, approaching January's record above $5,625. Treasury yields rose to 4.05% on the 10-year note. Bitcoin recovered to $69,200 after dipping to $63,000 over the weekend. Silver fell ~3%.</div>
+          <div class="news-footer">
+            <span class="news-category cat-markets">Markets</span>
+            <span class="news-source">Investopedia</span>
+            <a href="https://www.investopedia.com/stock-market-today-dow-jones-s-and-p-500-03022026-11917019" target="_blank" class="news-link">Read ↗</a>
+          </div>
+        </div>
+        <div class="news-side">
+          <span class="new-badge">🆕 NEW</span>
+        </div>
+      </div>
+
+      <div class="news-card">
+        <div class="news-num">3</div>
+        <div class="news-content">
+          <div class="news-headline">401(k) Limit Rises to $24,500 in 2026 — Max Out Now</div>
+          <div class="news-summary">The 2026 annual 401(k)/403(b) contribution limit increased from $23,500 to $24,500. IRA limits also updated. Catch-up contributions for ages 60–63 rise to $11,250. Tax season refunds are running 13–14% higher year-over-year — consider directing refunds to retirement accounts.</div>
+          <div class="news-footer">
+            <span class="news-category cat-personal">Personal Finance</span>
+            <span class="news-source">Fidelity / IRS</span>
+            <a href="https://www.fidelity.com/learning-center/personal-finance/retirement/2026-contribution-limits" target="_blank" class="news-link">Read ↗</a>
+          </div>
+        </div>
+        <div class="news-side"></div>
+      </div>
+
+      <div class="news-card">
+        <div class="news-num">4</div>
+        <div class="news-content">
+          <div class="news-headline">🆕 Supreme Court Rules IEEPA Does Not Authorize Presidential Tariffs</div>
+          <div class="news-summary">The U.S. Supreme Court ruled on Feb 20, 2026 that the International Emergency Economic Powers Act does NOT authorize the president to impose tariffs. Trump's new 10% global import tariff is now under legal challenge. Markets are watching for economic ripple effects on consumer prices.</div>
+          <div class="news-footer">
+            <span class="news-category cat-economy">Economy</span>
+            <span class="news-source">Holland & Knight / NYT</span>
+            <a href="https://www.hklaw.com/en/insights/publications/2026/03/supreme-court-ieepa-ruling-and-new-us-tariffs-implications-for-civil" target="_blank" class="news-link">Read ↗</a>
+          </div>
+        </div>
+        <div class="news-side">
+          <span class="new-badge">🆕 NEW</span>
+        </div>
+      </div>
+
+      <div class="news-card">
+        <div class="news-num">5</div>
+        <div class="news-content">
+          <div class="news-headline">🆕 AI Disruption Hammers Software & Data Stocks — Opportunity or Trap?</div>
+          <div class="news-summary">AI disruption fears have sent software, logistics, financial data, and wealth management stocks down 25–60% from recent highs. Carnegie Invest notes markets are "selling first, asking questions later." Investors should distinguish between structural decline and temporary repricing.</div>
+          <div class="news-footer">
+            <span class="news-category cat-investing">Investing</span>
+            <span class="news-source">Carnegie Invest</span>
+            <a href="https://blog.carnegieinvest.com/monthly-market-commentary-march-2026" target="_blank" class="news-link">Read ↗</a>
+          </div>
+        </div>
+        <div class="news-side">
+          <span class="new-badge">🆕 NEW</span>
+        </div>
+      </div>
+
+      <div class="news-card">
+        <div class="news-num">6</div>
+        <div class="news-content">
+          <div class="news-headline">6 Best Places to Put Your Money in March 2026</div>
+          <div class="news-summary">Financial pros recommend: (1) Short-term CDs for locked-in yields, (2) High-yield savings accounts (up to 4.00% APY), (3) ETFs/mutual funds in defensive sectors, (4) Global equities for diversification, (5) TIPS for inflation protection, (6) Short-duration bond funds for stability.</div>
+          <div class="news-footer">
+            <span class="news-category cat-personal">Personal Finance</span>
+            <span class="news-source">FinanceBuzz</span>
+            <a href="https://financebuzz.com/news/best-places-put-money-march-2026" target="_blank" class="news-link">Read ↗</a>
+          </div>
+        </div>
+        <div class="news-side"></div>
+      </div>
+
+      <div class="news-card">
+        <div class="news-num">7</div>
+        <div class="news-content">
+          <div class="news-headline">🆕 U.S. Economy Grew Just 1.4% in Q4 2025 — Fed Eyes Rate Cuts</div>
+          <div class="news-summary">GDP growth came in weaker than expected at 1.4% annualized in Q4 2025, dragged by a 17% annualized decline in federal government spending. The 2-year Treasury yield has fallen to 2022 lows, signaling bond markets anticipate Fed rate cuts. Tariff inflation has been more muted than feared (~2%).</div>
+          <div class="news-footer">
+            <span class="news-category cat-economy">Economy</span>
+            <span class="news-source">Interactive Brokers / Carnegie</span>
+            <a href="https://www.interactivebrokers.com/campus/traders-insight/securities/macro/economic-update-week-of-march-2-2026/" target="_blank" class="news-link">Read ↗</a>
+          </div>
+        </div>
+        <div class="news-side">
+          <span class="new-badge">🆕 NEW</span>
+        </div>
+      </div>
+
+      <div class="news-card">
+        <div class="news-num">8</div>
+        <div class="news-content">
+          <div class="news-headline">🆕 68% of Individual Investors Expect Stock Market Gains in 2026</div>
+          <div class="news-summary">A new Motley Fool survey finds nearly 70% of individual investors expect positive stock market returns in 2026, with almost no one predicting a correction. Despite Middle East conflict and AI disruption fears, investor sentiment remains broadly bullish — though expectations are modest.</div>
+          <div class="news-footer">
+            <span class="news-category cat-markets">Markets</span>
+            <span class="news-source">Motley Fool / Yahoo Finance</span>
+            <a href="https://www.fool.com/investing/2026/03/02/survey-investors-expect-stock-market-gains-2026/" target="_blank" class="news-link">Read ↗</a>
+          </div>
+        </div>
+        <div class="news-side">
+          <span class="new-badge">🆕 NEW</span>
+        </div>
+      </div>
+
+    </div>
+  </div><!-- /tab-finance -->
+
+
+  <!-- ===== TAB 3: U.S. GOVERNMENT ===== -->
+  <div id="tab-usgov" class="tab-panel">
+    <div class="section-header">
+      <div>
+        <div class="section-title"><span class="icon">🏛️</span> Top 8 U.S. Government News</div>
+        <div class="section-subtitle">Politics · Policy · Congress · Executive Branch — March 2, 2026</div>
+      </div>
+    </div>
+
+    <div class="alert-banner">
+      <span class="alert-icon">🚨</span>
+      <span class="alert-text"><strong>BREAKING:</strong> U.S. and Israel launched military strikes on Iran over the weekend. President Trump says operations could last 4–5 weeks. Congress is debating war powers authority.</span>
+    </div>
+
+    <div class="news-grid">
+
+      <div class="news-card">
+        <div class="news-num">1</div>
+        <div class="news-content">
+          <div class="news-headline">🆕 U.S. and Israel Launch Major Military Strike on Iran</div>
+          <div class="news-summary">Early Saturday, U.S. and Israeli forces launched a full-scale military assault on Iran, killing Supreme Leader Ali Khamenei, Iran's defense minister, IRGC chief, and 550+ civilians. Trump said the operation could last 4–5 weeks. Iran retaliated with drone and missile strikes across the Middle East.</div>
+          <div class="news-footer">
+            <span class="news-source">NPR / Reuters</span>
+            <a href="https://www.reuters.com/world/trump-says-he-ordered-iran-strikes-thwart-tehrans-missile-program-2026-03-02/" target="_blank" class="news-link">Read ↗</a>
+          </div>
+        </div>
+        <div class="news-side"><span class="new-badge">🆕 NEW</span></div>
+      </div>
+
+      <div class="news-card">
+        <div class="news-num">2</div>
+        <div class="news-content">
+          <div class="news-headline">🆕 Congress Debates War Powers Resolution After Iran Strikes</div>
+          <div class="news-summary">Trump launched strikes without congressional approval, sparking a bipartisan debate. Democrats question the legality; most GOP lawmakers back the president. Congress is expected to consider a War Powers Resolution this week. Strikes came just as Omani mediators announced a diplomatic breakthrough.</div>
+          <div class="news-footer">
+            <span class="news-source">NCR Online / Virginia Mercury</span>
+            <a href="https://www.ncronline.org/news/congress-expected-consider-war-powers-resolution-after-us-israel-strikes-iran" target="_blank" class="news-link">Read ↗</a>
+          </div>
+        </div>
+        <div class="news-side"><span class="new-badge">🆕 NEW</span></div>
+      </div>
+
+      <div class="news-card">
+        <div class="news-num">3</div>
+        <div class="news-content">
+          <div class="news-headline">🆕 DHS Partial Government Shutdown — Workers Miss Pay</div>
+          <div class="news-summary">The Department of Homeland Security remains shut down amid a White House-Democrat impasse over ICE funding. Tens of thousands of federal employees — including TSA workers — are missing paychecks. Republicans are using the Iran conflict to pressure Democrats into passing a DHS funding bill.</div>
+          <div class="news-footer">
+            <span class="news-source">GovExec / Federal News Network</span>
+            <a href="https://www.govexec.com/management/2026/03/congress-searches-shutdown-ramp-dhs-employees-start-missing-pay/411814/" target="_blank" class="news-link">Read ↗</a>
+          </div>
+        </div>
+        <div class="news-side"><span class="new-badge">🆕 NEW</span></div>
+      </div>
+
+      <div class="news-card">
+        <div class="news-num">4</div>
+        <div class="news-content">
+          <div class="news-headline">🆕 Supreme Court Strikes Down Trump's Tariff Authority Under IEEPA</div>
+          <div class="news-summary">The U.S. Supreme Court ruled on Feb 20 that the president cannot impose tariffs under the International Emergency Economic Powers Act. Trump's 10% global import tariff is now legally contested. The USTR delivered the 2026 Trade Policy Agenda to Congress on March 2.</div>
+          <div class="news-footer">
+            <span class="news-source">Duke Law / Holland & Knight</span>
+            <a href="https://www.hklaw.com/en/insights/publications/2026/03/supreme-court-ieepa-ruling-and-new-us-tariffs-implications-for-civil" target="_blank" class="news-link">Read ↗</a>
+          </div>
+        </div>
+        <div class="news-side"><span class="new-badge">🆕 NEW</span></div>
+      </div>
+
+      <div class="news-card">
+        <div class="news-num">5</div>
+        <div class="news-content">
+          <div class="news-headline">🆕 DOGE Cuts Face July 18 Deadline: $9.4B Must Be Codified</div>
+          <div class="news-summary">Lawmakers have until July 18 to pass $9.4 billion in DOGE-driven spending cuts into law. Several GOP senators are expressing skepticism. DOGE activities are now moving to the department and agency level, with scrutiny on federal spending expected to continue throughout 2026.</div>
+          <div class="news-footer">
+            <span class="news-source">AOL News / Washington Technology</span>
+            <a href="https://www.aol.com/news/clocks-ticking-codifying-doge-cuts-174930677.html" target="_blank" class="news-link">Read ↗</a>
+          </div>
+        </div>
+        <div class="news-side"><span class="new-badge">🆕 NEW</span></div>
+      </div>
+
+      <div class="news-card">
+        <div class="news-num">6</div>
+        <div class="news-content">
+          <div class="news-headline">🆕 Trump Calls for Regime Change in Iran; Vows Continued Operations</div>
+          <div class="news-summary">In a video message, President Trump called for Iranians to overthrow their government and confirmed 4 U.S. service members have been killed. He said operations could last weeks. Iran's FM condemned the U.S. for abandoning diplomacy mid-negotiation, calling it a "very bad and negative record."</div>
+          <div class="news-footer">
+            <span class="news-source">NYT / Democracy Now</span>
+            <a href="https://www.nytimes.com/live/2026/03/02/world/iran-us-israel-attack-trump" target="_blank" class="news-link">Read ↗</a>
+          </div>
+        </div>
+        <div class="news-side"><span class="new-badge">🆕 NEW</span></div>
+      </div>
+
+      <div class="news-card">
+        <div class="news-num">7</div>
+        <div class="news-content">
+          <div class="news-headline">🆕 White House Opposes Utah AI Bill, Pushes Federal AI Authority</div>
+          <div class="news-summary">The White House is opposing state-level AI regulation, including a Utah AI bill, as part of a broader push to centralize federal authority over AI governance. ALEC urges states to adopt a "light-touch" approach. The Trump administration's AI agenda aims to prevent a patchwork of state laws.</div>
+          <div class="news-footer">
+            <span class="news-source">JD Supra / ALEC</span>
+            <a href="https://www.jdsupra.com/legalnews/white-house-ai-policy-update-utah-ai-9563484/" target="_blank" class="news-link">Read ↗</a>
+          </div>
+        </div>
+        <div class="news-side"><span class="new-badge">🆕 NEW</span></div>
+      </div>
+
+      <div class="news-card">
+        <div class="news-num">8</div>
+        <div class="news-content">
+          <div class="news-headline">Trump Administration Withdraws from Dozens of International Organizations</div>
+          <div class="news-summary">The Trump administration has withdrawn the U.S. from dozens of international organizations and treaties in an unprecedented move. Legal scholars note a future president could rejoin most of them. The withdrawals are part of a broader "America First" foreign policy realignment.</div>
+          <div class="news-footer">
+            <span class="news-source">IBA Net</span>
+            <a href="https://www.ibanet.org/US-presidency-Trump-administration-withdraws-from-dozens-of-international-organisations-in-unprecedented-move" target="_blank" class="news-link">Read ↗</a>
+          </div>
+        </div>
+        <div class="news-side"></div>
+      </div>
+
+    </div>
+  </div><!-- /tab-usgov -->
+
+
+  <!-- ===== TAB 4: INTERNATIONAL ===== -->
+  <div id="tab-international" class="tab-panel">
+    <div class="section-header">
+      <div>
+        <div class="section-title"><span class="icon">🌍</span> Top 8 International News</div>
+        <div class="section-subtitle">Global Events · Geopolitics · World Economy — March 2, 2026</div>
+      </div>
+    </div>
+
+    <div class="alert-banner">
+      <span class="alert-icon">🌐</span>
+      <span class="alert-text"><strong>MAJOR GLOBAL EVENT:</strong> U.S.-Israeli military assault on Iran is reshaping global energy markets, Middle East geopolitics, and international alliances in real time.</span>
+    </div>
+
+    <!-- Regional Chart -->
+    <div class="charts-row">
+      <div class="chart-card">
+        <div class="chart-title">🌍 News by Region</div>
+        <div class="chart-container">
+          <canvas id="regionChart"></canvas>
+        </div>
+      </div>
+      <div class="chart-card">
+        <div class="chart-title">📉 Global Market Impact (Today)</div>
+        <div class="chart-container">
+          <canvas id="globalMarketChart"></canvas>
+        </div>
+      </div>
+    </div>
+
+    <div class="news-grid">
+
+      <div class="news-card">
+        <div class="news-num">1</div>
+        <div class="news-content">
+          <div class="news-headline">🆕 U.S.-Israel Strike Kills Iran's Supreme Leader; 550+ Civilians Dead</div>
+          <div class="news-summary">The joint U.S.-Israeli assault on Iran killed Supreme Leader Khamenei, his daughter, granddaughter, Iran's defense minister, IRGC chief, and 550+ civilians including 165 children in a school strike. Iran launched retaliatory drone and missile attacks across Israel and Gulf Arab nations.</div>
+          <div class="news-footer">
+            <span class="news-source">Democracy Now / The Guardian</span>
+            <a href="https://www.theguardian.com/world/live/2026/mar/02/us-israel-war-iran-live-updates-attacks-strikes-tehran-lebanon-beirut-hezbollah-dubai-latest-news" target="_blank" class="news-link">Read ↗</a>
+          </div>
+        </div>
+        <div class="news-side"><span class="new-badge">🆕 NEW</span></div>
+      </div>
+
+      <div class="news-card">
+        <div class="news-num">2</div>
+        <div class="news-content">
+          <div class="news-headline">🆕 Iran Retaliates: Missiles Hit Israel, Gulf States; Strait of Hormuz Threatened</div>
+          <div class="news-summary">Iran launched ballistic missiles at Israel (killing 9 in Beit Shemesh), struck Gulf Arab nations hosting U.S. bases, and claimed to close the Strait of Hormuz — through which 25% of the world's seaborne oil passes. Qatar halted LNG production. Oil surged 8%, natural gas +3.25%.</div>
+          <div class="news-footer">
+            <span class="news-source">Euronews / CNBC</span>
+            <a href="https://www.cnbc.com/2026/03/02/us-iran-live-updates-trump-oil-gold.html" target="_blank" class="news-link">Read ↗</a>
+          </div>
+        </div>
+        <div class="news-side"><span class="new-badge">🆕 NEW</span></div>
+      </div>
+
+      <div class="news-card">
+        <div class="news-num">3</div>
+        <div class="news-content">
+          <div class="news-headline">🆕 European Markets Slump as Iran 'War Trade' Joins AI Disruption Fears</div>
+          <div class="news-summary">European stocks opened sharply lower Monday as crude oil prices surged. Gulf stock exchanges remained closed. The Iran conflict threatens to push up inflation and dent Europe's already meagre economic growth. The ECB faces new pressure as energy costs rise across the continent.</div>
+          <div class="news-footer">
+            <span class="news-source">Reuters / Euronews</span>
+            <a href="https://www.euronews.com/business/2026/03/02/european-stocks-dip-as-gulf-exchanges-stay-shut-following-iran-strikes" target="_blank" class="news-link">Read ↗</a>
+          </div>
+        </div>
+        <div class="news-side"><span class="new-badge">🆕 NEW</span></div>
+      </div>
+
+      <div class="news-card">
+        <div class="news-num">4</div>
+        <div class="news-content">
+          <div class="news-headline">🆕 Ukraine Gained More Territory Than It Lost in February 2026</div>
+          <div class="news-summary">Ukrainian Commander-in-Chief Syrskyi announced that Ukrainian forces captured more territory in February than Russia occupied in the same period. The Kremlin says continuing peace talks is in Russia's own interests. Ukraine is also offering to help shoot down Iranian drones being used by Russia.</div>
+          <div class="news-footer">
+            <span class="news-source">Kyiv Independent / Reuters</span>
+            <a href="https://kyivindependent.com/ukraine-captured-more-territory-than-it-lost-to-russia-over-febraury-2026-syrskyi-says/" target="_blank" class="news-link">Read ↗</a>
+          </div>
+        </div>
+        <div class="news-side"><span class="new-badge">🆕 NEW</span></div>
+      </div>
+
+      <div class="news-card">
+        <div class="news-num">5</div>
+        <div class="news-content">
+          <div class="news-headline">🆕 China's CCP Updates Taiwan Policy in New Five-Year Plan (2026–2030)</div>
+          <div class="news-summary">China's Communist Party has changed how it discusses Taiwan policy in its new Five-Year Plan, with experts saying the approach will become more "standardized." Taiwan's MOFA rebuked China's embassy in Israel for offering to evacuate Taiwanese citizens under Chinese travel documents.</div>
+          <div class="news-footer">
+            <span class="news-source">Crisis Group / Taipei Times</span>
+            <a href="https://www.crisisgroup.org/cmt/asia-pacific/taiwan-strait-china-united-states/three-body-problem-taiwan-strait" target="_blank" class="news-link">Read ↗</a>
+          </div>
+        </div>
+        <div class="news-side"><span class="new-badge">🆕 NEW</span></div>
+      </div>
+
+      <div class="news-card">
+        <div class="news-num">6</div>
+        <div class="news-content">
+          <div class="news-headline">🆕 UN Nuclear Watchdog Urges Restraint; Iran's Natanz Facility Hit</div>
+          <div class="news-summary">Iran's Natanz nuclear facility was struck during the U.S.-Israeli assault, according to Iran's ambassador to the IAEA. The UN nuclear watchdog urged restraint and called for protection of nuclear sites. The IAEA is monitoring the situation amid fears of radioactive contamination.</div>
+          <div class="news-footer">
+            <span class="news-source">UN News</span>
+            <a href="https://news.un.org/en/audio/2026/03/1167066" target="_blank" class="news-link">Read ↗</a>
+          </div>
+        </div>
+        <div class="news-side"><span class="new-badge">🆕 NEW</span></div>
+      </div>
+
+      <div class="news-card">
+        <div class="news-num">7</div>
+        <div class="news-content">
+          <div class="news-headline">🆕 Samsung Unveils Galaxy AI Ecosystem Advances at MWC 2026</div>
+          <div class="news-summary">Samsung showcased the Galaxy S26 series and expanded Galaxy AI ecosystem at Mobile World Congress 2026 in Barcelona. The company is advancing connected device intelligence, AI-powered photography, and cross-device integration. MWC 2026 is packed with major tech announcements from global manufacturers.</div>
+          <div class="news-footer">
+            <span class="news-source">Samsung Newsroom</span>
+            <a href="https://news.samsung.com/us/samsung-advances-galaxy-ai-connected-ecosystem-mwc-2026/" target="_blank" class="news-link">Read ↗</a>
+          </div>
+        </div>
+        <div class="news-side"><span class="new-badge">🆕 NEW</span></div>
+      </div>
+
+      <div class="news-card">
+        <div class="news-num">8</div>
+        <div class="news-content">
+          <div class="news-headline">🆕 Europe Debates Sending Troops to Ukraine Without Russian Approval</div>
+          <div class="news-summary">European leaders are debating whether to send peacekeeping troops to Ukraine without first seeking Russian approval. The Atlantic Council argues Europe must act independently. Discussions are ongoing as the Russia-Ukraine conflict enters a potential ceasefire negotiation phase amid the Iran crisis.</div>
+          <div class="news-footer">
+            <span class="news-source">Atlantic Council</span>
+            <a href="https://www.atlanticcouncil.org/blogs/ukrainealert/europe-must-not-seek-putins-approval-before-sending-troops-to-ukraine/" target="_blank" class="news-link">Read ↗</a>
+          </div>
+        </div>
+        <div class="news-side"><span class="new-badge">🆕 NEW</span></div>
+      </div>
+
+    </div>
+  </div><!-- /tab-international -->
+
+
+  <!-- ===== TAB 5: AI NEWS ===== -->
+  <div id="tab-ai" class="tab-panel">
+    <div class="section-header">
+      <div>
+        <div class="section-title"><span class="icon">🤖</span> Top 5 AI Developments</div>
+        <div class="section-subtitle">Model Releases · Partnerships · Regulation · Research — March 2, 2026</div>
+      </div>
+    </div>
+
+    <!-- AI Chart -->
+    <div class="charts-row">
+      <div class="chart-card">
+        <div class="chart-title">🤖 AI News Categories</div>
+        <div class="chart-container">
+          <canvas id="aiCategoryChart"></canvas>
+        </div>
+      </div>
+      <div class="chart-card">
+        <div class="chart-title">📈 AI Investment Landscape (2026 Deals)</div>
+        <div class="chart-container">
+          <canvas id="aiInvestChart"></canvas>
+        </div>
+      </div>
+    </div>
+
+    <div class="ai-grid">
+
+      <div class="ai-card">
+        <div class="ai-rank">1</div>
+        <div>
+          <div class="ai-headline">🆕 Amazon Invests $50B in OpenAI in Landmark Strategic Partnership</div>
+          <div class="ai-summary">Amazon and OpenAI announced a multi-year, $50 billion strategic partnership on Feb 27, 2026. AWS will serve as the exclusive third-party cloud distribution for OpenAI and will consume 2 gigawatts of Trainium capacity. OpenAI also raised $110B in new funding and expanded its AWS agreement to $138B total over 8 years. This is one of the largest AI deals in history.</div>
+          <div class="ai-footer">
+            <span class="new-badge">🆕 NEW</span>
+            <span class="news-source" style="font-size:12px; color: var(--text2);">AI Business / GeekWire</span>
+            <a href="https://aibusiness.com/foundation-models/openai-unveils-110billion-funding-expands-aws-partnership" target="_blank" class="news-link">Read ↗</a>
+          </div>
+        </div>
+      </div>
+
+      <div class="ai-card">
+        <div class="ai-rank">2</div>
+        <div>
+          <div class="ai-headline">🆕 OpenAI Launches Codex-Spark: 1,000+ Tokens/Second Coding Model</div>
+          <div class="ai-summary">OpenAI released GPT-5.3-Codex-Spark, a speed-first coding model generating over 1,000 tokens per second with ultra-low latency for real-time interactive coding. It is designed for throughput-heavy coding workflows. Meanwhile, GPT-5.1 is being retired on March 11 as GPT-5.2 becomes the flagship model. GPT-5.3 codenames "Vortex" and "Zephyr" have also appeared on Chatbot Arena.</div>
+          <div class="ai-footer">
+            <span class="new-badge">🆕 NEW</span>
+            <span class="news-source" style="font-size:12px; color: var(--text2);">InfoQ / The AI Edge</span>
+            <a href="https://www.infoq.com/news/2026/03/open-ai-codex-spark/" target="_blank" class="news-link">Read ↗</a>
+          </div>
+        </div>
+      </div>
+
+      <div class="ai-card">
+        <div class="ai-rank">3</div>
+        <div>
+          <div class="ai-headline">🆕 Google DeepMind CEO: AI Hardware Shortages Are Slowing Research</div>
+          <div class="ai-summary">Demis Hassabis told CNBC that shortages in GPU memory, graphics processing units, and electricity are constraining AI research and deployment. DeepMind is "lucky" to own TPUs, but hardware bottlenecks remain a systemic challenge across the industry. This is slowing the pace of AI breakthroughs and deployment at scale.</div>
+          <div class="ai-footer">
+            <span class="new-badge">🆕 NEW</span>
+            <span class="news-source" style="font-size:12px; color: var(--text2);">Yahoo Finance / Intellectia AI</span>
+            <a href="https://finance.yahoo.com/news/were-lucky-because-own-tpus-152212039.html" target="_blank" class="news-link">Read ↗</a>
+          </div>
+        </div>
+      </div>
+
+      <div class="ai-card">
+        <div class="ai-rank">4</div>
+        <div>
+          <div class="ai-headline">🆕 White House Pushes Federal AI Authority; Opposes State-Level Patchwork</div>
+          <div class="ai-summary">The White House is actively opposing state AI bills (including Utah's) to centralize federal AI regulation. ALEC urges states to adopt "light-touch" regulation. The Fed is also racing to understand AI's impact on jobs and inflation. BofA economists say AI will create new job types rather than simply eliminate roles — good news for students entering the workforce.</div>
+          <div class="ai-footer">
+            <span class="new-badge">🆕 NEW</span>
+            <span class="news-source" style="font-size:12px; color: var(--text2);">JD Supra / Reuters / BofA</span>
+            <a href="https://www.jdsupra.com/legalnews/white-house-ai-policy-update-utah-ai-9563484/" target="_blank" class="news-link">Read ↗</a>
+          </div>
+        </div>
+      </div>
+
+      <div class="ai-card">
+        <div class="ai-rank">5</div>
+        <div>
+          <div class="ai-headline">🆕 AI Disruption Reshapes Finance, Software & Logistics Sectors</div>
+          <div class="ai-summary">AI disruption is no longer confined to tech stocks. Software companies, logistics firms, commercial real estate brokers, financial data providers, and wealth management firms have seen shares fall 25–60% from recent highs. Meanwhile, data infrastructure, utilities, and cooling systems for data centers are surging. Markets are recalibrating which industries will thrive vs. struggle in an AI-driven economy.</div>
+          <div class="ai-footer">
+            <span class="new-badge">🆕 NEW</span>
+            <span class="news-source" style="font-size:12px; color: var(--text2);">Carnegie Invest / MIT Sloan</span>
+            <a href="https://blog.carnegieinvest.com/monthly-market-commentary-march-2026" target="_blank" class="news-link">Read ↗</a>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div><!-- /tab-ai -->
+
+</main>
+
+<!-- SCRIPTS -->
+<script>
+// ===== TAB SWITCHING =====
+function switchTab(tabId, btn) {
+  document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('tab-' + tabId).classList.add('active');
+  btn.classList.add('active');
+}
+
+// ===== REFRESH DASHBOARD =====
+function refreshDashboard() {
+  const btn = document.querySelector('.update-btn');
+  btn.textContent = '⏳ Refreshing...';
+  btn.disabled = true;
+  setTimeout(() => {
+    const now = new Date();
+    const timeStr = now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true });
+    document.querySelector('.last-updated').innerHTML = `<span class="live-dot"></span> Updated: March 2, 2026 — ${timeStr} MT`;
+    btn.innerHTML = '🔄 Update Dashboard';
+    btn.disabled = false;
+    // Flash effect
+    document.body.style.opacity = '0.8';
+    setTimeout(() => { document.body.style.opacity = '1'; }, 200);
+  }, 1500);
+}
+
+// ===== JOB SEARCH =====
+function searchJobs(query) {
+  const q = query.toLowerCase();
+  document.querySelectorAll('.job-card').forEach(card => {
+    const text = card.dataset.title.toLowerCase();
+    card.style.display = (!q || text.includes(q)) ? '' : 'none';
+  });
+}
+
+// ===== JOB FILTER =====
+function filterJobs(type, btn) {
+  document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  document.querySelectorAll('.job-card').forEach(card => {
+    if (type === 'all') {
+      card.style.display = '';
+    } else if (type === 'new') {
+      card.style.display = card.classList.contains('new-job') ? '' : 'none';
+    } else {
+      const tags = card.dataset.tags || '';
+      card.style.display = tags.includes(type) ? '' : 'none';
+    }
+  });
+}
+
+// ===== CHARTS =====
+Chart.defaults.color = '#9ba3c8';
+Chart.defaults.borderColor = '#2e3250';
+
+// Jobs by Category
+new Chart(document.getElementById('jobsByCategoryChart'), {
+  type: 'doughnut',
+  data: {
+    labels: ['Finance/Accounting', 'Data/Analytics', 'Operations/PM', 'Multi-Discipline'],
+    datasets: [{
+      data: [5, 4, 2, 1],
+      backgroundColor: ['#4f8ef7', '#22d3a5', '#f7c948', '#7c5cfc'],
+      borderWidth: 0,
+      hoverOffset: 6
+    }]
+  },
+  options: {
+    responsive: true, maintainAspectRatio: false,
+    plugins: {
+      legend: { position: 'bottom', labels: { padding: 12, font: { size: 11 } } }
+    }
+  }
+});
+
+// Pay Range
+new Chart(document.getElementById('payRangeChart'), {
+  type: 'bar',
+  data: {
+    labels: ['< $18/hr', '$18–$21/hr', '$22–$25/hr', '$26+/hr'],
+    datasets: [{
+      label: 'Jobs',
+      data: [2, 3, 5, 2],
+      backgroundColor: ['#f76b4f', '#f7c948', '#4f8ef7', '#22d3a5'],
+      borderRadius: 6,
+      borderWidth: 0
+    }]
+  },
+  options: {
+    responsive: true, maintainAspectRatio: false,
+    plugins: { legend: { display: false } },
+    scales: {
+      y: { beginAtZero: true, ticks: { stepSize: 1 }, grid: { color: '#2e3250' } },
+      x: { grid: { display: false } }
+    }
+  }
+});
+
+// Recency
+new Chart(document.getElementById('recencyChart'), {
+  type: 'bar',
+  data: {
+    labels: ['1–3 days', '4–5 days', '6–7 days', '8–14 days', '30+ days'],
+    datasets: [{
+      label: 'Jobs Posted',
+      data: [4, 3, 2, 1, 2],
+      backgroundColor: '#4f8ef7',
+      borderRadius: 6,
+      borderWidth: 0
+    }]
+  },
+  options: {
+    responsive: true, maintainAspectRatio: false,
+    plugins: { legend: { display: false } },
+    scales: {
+      y: { beginAtZero: true, ticks: { stepSize: 1 }, grid: { color: '#2e3250' } },
+      x: { grid: { display: false } }
+    }
+  }
+});
+
+// Market Performance
+new Chart(document.getElementById('marketPerfChart'), {
+  type: 'bar',
+  data: {
+    labels: ['S&P 500', 'NASDAQ', 'DOW', 'Oil (WTI)', 'Gold', '10Y Yield', 'Bitcoin'],
+    datasets: [{
+      label: '% Change Today',
+      data: [0.1, 0.4, -0.2, 8.0, 1.9, 2.5, 9.8],
+      backgroundColor: [0.1, 0.4, -0.2, 8.0, 1.9, 2.5, 9.8].map(v => v >= 0 ? '#22d3a5' : '#f76b4f'),
+      borderRadius: 6,
+      borderWidth: 0
+    }]
+  },
+  options: {
+    responsive: true, maintainAspectRatio: false,
+    plugins: { legend: { display: false } },
+    scales: {
+      y: { grid: { color: '#2e3250' }, ticks: { callback: v => v + '%' } },
+      x: { grid: { display: false }, ticks: { font: { size: 10 } } }
+    }
+  }
+});
+
+// Sector Performance
+new Chart(document.getElementById('sectorChart'), {
+  type: 'horizontalBar',
+  type: 'bar',
+  data: {
+    labels: ['Defense', 'Energy', 'Tech', 'Financials', 'Airlines', 'Cruise Lines'],
+    datasets: [{
+      label: '% Change',
+      data: [5.2, 3.8, 1.2, 0.5, -3.3, -7.1],
+      backgroundColor: [5.2, 3.8, 1.2, 0.5, -3.3, -7.1].map(v => v >= 0 ? '#22d3a5' : '#f76b4f'),
+      borderRadius: 6,
+      borderWidth: 0
+    }]
+  },
+  options: {
+    indexAxis: 'y',
+    responsive: true, maintainAspectRatio: false,
+    plugins: { legend: { display: false } },
+    scales: {
+      x: { grid: { color: '#2e3250' }, ticks: { callback: v => v + '%' } },
+      y: { grid: { display: false }, ticks: { font: { size: 11 } } }
+    }
+  }
+});
+
+// Region Chart
+new Chart(document.getElementById('regionChart'), {
+  type: 'doughnut',
+  data: {
+    labels: ['Middle East', 'Europe', 'Asia-Pacific', 'Global/Multi'],
+    datasets: [{
+      data: [3, 3, 1, 1],
+      backgroundColor: ['#f76b4f', '#4f8ef7', '#f7c948', '#7c5cfc'],
+      borderWidth: 0,
+      hoverOffset: 6
+    }]
+  },
+  options: {
+    responsive: true, maintainAspectRatio: false,
+    plugins: {
+      legend: { position: 'bottom', labels: { padding: 12, font: { size: 11 } } }
+    }
+  }
+});
+
+// Global Market Impact
+new Chart(document.getElementById('globalMarketChart'), {
+  type: 'bar',
+  data: {
+    labels: ['Euro Stoxx', 'FTSE 100', 'DAX', 'Nikkei', 'Oil (WTI)', 'Nat. Gas'],
+    datasets: [{
+      label: '% Change',
+      data: [-2.1, -1.8, -2.4, -0.9, 8.0, 3.25],
+      backgroundColor: [-2.1, -1.8, -2.4, -0.9, 8.0, 3.25].map(v => v >= 0 ? '#22d3a5' : '#f76b4f'),
+      borderRadius: 6,
+      borderWidth: 0
+    }]
+  },
+  options: {
+    responsive: true, maintainAspectRatio: false,
+    plugins: { legend: { display: false } },
+    scales: {
+      y: { grid: { color: '#2e3250' }, ticks: { callback: v => v + '%' } },
+      x: { grid: { display: false }, ticks: { font: { size: 10 } } }
+    }
+  }
+});
+
+// AI Category Chart
+new Chart(document.getElementById('aiCategoryChart'), {
+  type: 'doughnut',
+  data: {
+    labels: ['Model Releases', 'Partnerships/Funding', 'Regulation/Policy', 'Hardware/Infra', 'Industry Impact'],
+    datasets: [{
+      data: [2, 1, 1, 1, 1],
+      backgroundColor: ['#4f8ef7', '#22d3a5', '#f7c948', '#7c5cfc', '#f76b4f'],
+      borderWidth: 0,
+      hoverOffset: 6
+    }]
+  },
+  options: {
+    responsive: true, maintainAspectRatio: false,
+    plugins: {
+      legend: { position: 'bottom', labels: { padding: 10, font: { size: 10 } } }
+    }
+  }
+});
+
+// AI Investment Chart
+new Chart(document.getElementById('aiInvestChart'), {
+  type: 'bar',
+  data: {
+    labels: ['OpenAI\n(Amazon)', 'OpenAI\n(Total Raise)', 'AWS\n(OpenAI Deal)', 'Anthropic\n(Google)', 'xAI\n(Grok)'],
+    datasets: [{
+      label: 'Investment ($B)',
+      data: [50, 110, 138, 40, 24],
+      backgroundColor: ['#4f8ef7', '#22d3a5', '#7c5cfc', '#f7c948', '#f76b4f'],
+      borderRadius: 6,
+      borderWidth: 0
+    }]
+  },
+  options: {
+    responsive: true, maintainAspectRatio: false,
+    plugins: { legend: { display: false } },
+    scales: {
+      y: { beginAtZero: true, grid: { color: '#2e3250' }, ticks: { callback: v => '$' + v + 'B' } },
+      x: { grid: { display: false }, ticks: { font: { size: 10 } } }
+    }
+  }
+});
+</script>
+</body>
+</html>
