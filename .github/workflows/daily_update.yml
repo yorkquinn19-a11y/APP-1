@@ -1,4 +1,5 @@
 name: Daily Dashboard Update
+
 on:
   schedule:
     # Runs every day at 14:00 UTC (8:00 AM America/Chicago)
