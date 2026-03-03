@@ -1,33 +1,27 @@
-from datetime import datetime
-from zoneinfo import ZoneInfo
+from datetime import datetime, timezone
 import pathlib
-import re
 
 
-def update_timestamp_in_html(html_path: str) -> None:
-    """
-    Update the "Updated: ..." timestamp in index.html to the current time
-    in America/Denver.
-    """
+def update_timestamp(html_path="/home/ubuntu/dashboard/index.html"):
     path = pathlib.Path(html_path)
     html = path.read_text(encoding="utf-8")
 
-    now_mt = datetime.now(ZoneInfo("America/Denver"))
-    formatted = now_mt.strftime("%B %-d, %Y — %I:%M %p MT")
+    now = datetime.now(timezone.utc)
+    day = now.day
+    formatted = now.strftime("%B ") + str(day) + now.strftime(", %Y — %I:%M %p UTC")
 
-    # Replace the first occurrence after 'Updated:' up to the next closing tag
-    pattern = r"Updated:\s*.*?</"
-    replacement = f"Updated: {formatted}</"
-
-    new_html, count = re.subn(pattern, replacement, html, count=1, flags=re.DOTALL)
-
-    if count == 0:
-        # Insert a new line near the top if we can't find the pattern
-        insert = f"Updated: {formatted}\n"
-        new_html = insert + html
+    needle = "Updated:"
+    idx = html.find(needle)
+    if idx == -1:
+        new_html = needle + " " + formatted + "\n" + html
+    else:
+        lt = html.find("<", idx)
+        if lt == -1:
+            lt = len(html)
+        new_html = html[:idx] + needle + " " + formatted + html[lt:]
 
     path.write_text(new_html, encoding="utf-8")
 
 
 if __name__ == "__main__":
-    update_timestamp_in_html("index.html")
+    update_timestamp()
